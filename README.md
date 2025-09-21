@@ -1,18 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Progression Annuelle - Mathématiques 7ème SN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Harmony (Warm Neutrals with Soft Blue/Teal Accent) -->
-    <!-- Application Structure Plan: A dashboard-style SPA featuring an interactive weekly timeline as the primary navigation. Clicking a week dynamically updates a detail panel with corresponding chapter content, topics, and evaluations. This is chosen over a static table to provide a more engaging, at-a-glance overview and quick access to specific information, improving usability for students and teachers planning their studies. A donut chart provides a high-level summary of the curriculum's structure. -->
-    <!-- Visualization & Content Choices: Report Info: Yearly schedule table -> Goal: Provide intuitive navigation -> Viz/Method: Interactive HTML/Tailwind grid representing weeks -> Interaction: On-click updates a detail pane. Justification: More dynamic and user-friendly than a static table. | Report Info: Distribution of topics -> Goal: High-level summary -> Viz/Method: Chart.js Donut Chart -> Interaction: Hover tooltips. Justification: Provides a quick visual breakdown of the year's focus. | Report Info: Chapter topic lists -> Goal: Detailed information -> Viz/Method: Styled HTML lists -> Interaction: Dynamically displayed on selection. Justification: Clear and direct presentation of text content. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -50,11 +46,12 @@
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             <section id="timeline-section" class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
                 <h2 class="text-2xl font-bold mb-4">Calendrier Interactif</h2>
                 <p class="text-slate-600 mb-6">Cliquez sur une semaine pour afficher le détail du programme et les évaluations prévues. Le calendrier s'étend du 6 octobre 2025 au 30 juin 2026.</p>
                 <div id="timeline-container" class="space-y-6">
+                    <!-- Semaine blocs générés par JavaScript ici -->
                 </div>
             </section>
 
@@ -63,11 +60,9 @@
                     <h2 class="text-2xl font-bold mb-4" id="details-week-title">Semaine 1</h2>
                     <div id="details-content">
                         <h3 class="text-lg font-semibold text-cyan-700" id="details-chapter">Chargement...</h3>
-                        <ul class="mt-3 space-y-2 text-slate-600 list-disc list-inside" id="details-topics">
-                        </ul>
+                        <ul class="mt-3 space-y-2 text-slate-600 list-disc list-inside" id="details-topics"></ul>
                     </div>
-                    <div id="details-evaluation" class="mt-4">
-                    </div>
+                    <div id="details-evaluation" class="mt-4"></div>
                 </section>
 
                 <section class="bg-white p-6 rounded-2xl shadow-lg">
@@ -164,13 +159,23 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const timelineContainer = document.getElementById('timeline-container');
-            
+
             for (const [month, weeks] of Object.entries(scheduleData)) {
                 const monthDiv = document.createElement('div');
                 const monthTitle = document.createElement('h3');
                 monthTitle.className = "text-xl font-semibold capitalize mb-3";
-                monthTitle.textContent = month + ` ${month.includes("embre") || month === "janvier" || month === "fevrier" || month === "avril" || month === "juin" ? (month === "decembre" || month === "janvier" ? 2026 : (month.includes("embre") || month === "fevrier" || month === "avril" || month === "juin" ? 2026 : 2025)) : 2025}`;
-                
+
+                // Calcule et affiche l'année selon le mois
+                let yearDisplay = 2025;
+                if (["decembre", "janvier", "fevrier", "mars", "avril", "mai", "juin"].includes(month)) {
+                    yearDisplay = 2025;
+                    if (["janvier", "fevrier", "mars", "avril", "mai", "juin"].includes(month)) {
+                        yearDisplay = 2026;
+                    }
+                }
+
+                monthTitle.textContent = month + " " + yearDisplay;
+
                 const weeksGrid = document.createElement('div');
                 weeksGrid.className = "grid grid-cols-2 sm:grid-cols-4 gap-4";
 
@@ -178,7 +183,7 @@
                     const weekBox = document.createElement('div');
                     weekBox.className = "week-box border-2 border-slate-200 rounded-lg p-3 text-center cursor-pointer hover:border-cyan-500 hover:shadow-md transition-all duration-300";
                     weekBox.dataset.week = weekInfo.week;
-                    
+
                     let chapterText;
                     if (weekInfo.chapter.toLowerCase().includes('vacances')) {
                         weekBox.classList.add('bg-amber-50');
@@ -190,7 +195,7 @@
                         weekBox.classList.add('bg-slate-50');
                         chapterText = weekInfo.chapter;
                     }
-                    
+
                     let evaluationHtml = '';
                     if (weekInfo.evaluation) {
                        evaluationHtml = `<span class="block text-xs text-red-600 font-medium">● Éval.</span>`;
@@ -201,7 +206,7 @@
                         <p class="text-sm text-slate-500 mt-1">${chapterText}</p>
                         ${evaluationHtml}
                     `;
-                    
+
                     weekBox.addEventListener('click', () => updateDetails(weekInfo.week));
                     weeksGrid.appendChild(weekBox);
                 });
@@ -218,7 +223,10 @@
         function updateDetails(weekNumber) {
             const allWeeks = document.querySelectorAll('.week-box');
             allWeeks.forEach(w => w.classList.remove('active'));
-            document.querySelector(`.week-box[data-week='${weekNumber}']`).classList.add('active');
+            const activeWeek = document.querySelector(`.week-box[data-week='${weekNumber}']`);
+            if (activeWeek) {
+                activeWeek.classList.add('active');
+            }
 
             let weekData;
             for (const month in scheduleData) {
@@ -228,7 +236,9 @@
                     break;
                 }
             }
-            
+
+            if (!weekData) return;
+
             document.getElementById('details-week-title').textContent = `Semaine ${weekNumber}`;
             const chapterTitleEl = document.getElementById('details-chapter');
             const topicsListEl = document.getElementById('details-topics');
@@ -246,9 +256,9 @@
 
             if (weekData.evaluation) {
                 evaluationEl.innerHTML = `<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-md" role="alert">
-                                           <p class="font-bold">Évaluation Prévue</p>
-                                           <p>${weekData.evaluation}</p>
-                                         </div>`;
+                                              <p class="font-bold">Évaluation Prévue</p>
+                                              <p>${weekData.evaluation}</p>
+                                          </div>`;
             } else {
                 evaluationEl.innerHTML = '';
             }
@@ -289,12 +299,12 @@
                         },
                         title: {
                             display: false,
-                            text: 'Répartition du Programme'
                         }
                     }
                 }
             });
         }
     </script>
+
 </body>
 </html>
